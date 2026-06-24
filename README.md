@@ -9,7 +9,7 @@ A secure, command-line encrypted journal application with military-grade AES-256
 - **Local Storage Only**: All data stored locally—nothing leaves your machine
 - **Full Encryption**: Entire journal file is encrypted; no metadata leakage
 - **Authenticated Encryption**: GCM mode ensures data integrity; tampered files are rejected
-- **Hacker Aesthetic**: fsociety-inspired terminal UI with ASCII art banner
+- **Hacker Aesthetic**: Mr. Robot-inspired terminal UI with ASCII art banner
 - **Easy-to-Use CLI**: Intuitive command interface for managing journal entries
 - **Panic Wipe**: Secure file deletion option for emergency scenarios
 - **Search Capability**: Full-text search across all journal entries
