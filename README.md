@@ -1,6 +1,6 @@
 # DeepVault - Encrypted Journal CLI
 
-A secure, command-line encrypted journal application with military-grade AES-256 encryption. Designed for privacy-conscious users who want complete control over their personal journal data. I decided to create this application in my free time to experiment with encyption using Python, the programming language I am studying in college.
+A secure, command-line encrypted journal application with military-grade AES-256 encryption. Designed for privacy-conscious users who want complete control over their personal journal data. I decided to create this application in my free time to experiment with encryption using Python, the programming language I am studying in college.
 
 ## Features
 
