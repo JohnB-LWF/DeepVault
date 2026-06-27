@@ -1,5 +1,18 @@
 # DeepVault - Encrypted Journal CLI
 
+```
+                                                                    ,,         
+`7MM`7MYb.                          `7MMF'   `7MF'                `7MM   mm    
+  MM    `Yb.                           `MA     ,V                    MM   MM    
+  MM     `Mb  .gP"Ya   .gP"Ya `7MMpdMAo.VM:   ,V ,6"Yb.`7MM  `7MM    MM mmMMmm  
+  MM      MM ,M'   Yb ,M'   Yb  MM   `Wb MM.  M'8)   MM  MM    MM    MM   MM    
+  MM     ,MP 8M'''''' 8M''''''  MM    M8 `MM A'  ,pm9MM  MM    MM    MM   MM    
+  MM    ,dP' YM.    , YM.    ,  MM   ,AP  :MM;  8M   MM  MM    MM    MM   MM    
+.JMMmmmdP'    `Mbmmd'  `Mbmmd'  MMbmmd'    VF   `Moo9^Yo.`Mbod"YML..JMML. `Mbmo 
+                                MM                                              
+                              .JMML.                                            
+```
+
 A secure, command-line encrypted journal application with military-grade AES-256 encryption. Designed for privacy-conscious users who want complete control over their personal journal data. I decided to create this application in my free time to experiment with encryption using Python, the programming language I am studying in college.
 
 ## Features
