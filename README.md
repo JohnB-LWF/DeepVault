@@ -15,6 +15,10 @@
 
 A secure, command-line encrypted journal application with military-grade AES-256 encryption. Designed for privacy-conscious users who want complete control over their personal journal data. I decided to create this application in my free time to experiment with encryption using Python, the programming language I am studying in college.
 
+[Video Demo](https://www.youtube.com/watch?v=17GWwpiZYbU)
+
+[Read more on my blog](https://johnbelcher.dev/blog/entries/designing-encrypted-journal-cli.html)
+
 ## Features
 
 - **AES-256-GCM Encryption**: Military-grade authenticated encryption for all journal entries
