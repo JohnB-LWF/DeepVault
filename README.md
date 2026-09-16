@@ -27,7 +27,6 @@ A secure, command-line encrypted journal application with military-grade AES-256
 - **Full Encryption**: Entire journal file is encrypted; no metadata leakage
 - **Authenticated Encryption**: GCM mode ensures data integrity; tampered files are rejected
 - **Atomic, Locked-Down Writes**: Saves are written to a temp file and renamed into place, and the journal directory/file are restricted to owner-only permissions
-- **Hacker Aesthetic**: Mr. Robot-inspired terminal UI with ASCII art banner
 - **Easy-to-Use CLI**: Intuitive command interface for managing journal entries
 - **Panic Wipe**: Secure file deletion option for emergency scenarios
 - **Search Capability**: Full-text search across all journal entries
@@ -44,7 +43,7 @@ A secure, command-line encrypted journal application with military-grade AES-256
 
 ### Data Storage
 
-The journal file is a single binary blob—nothing is ever written to disk in plaintext. Layout (format version 2):
+The journal file is a single binary blob, nothing is ever written to disk in plaintext. Layout (format version 2):
 
 ```
 1 byte    format version
@@ -76,7 +75,7 @@ Once decrypted in memory, the journal is a plain dictionary:
 - **Atomic saves**: Each save writes to a temp file, `fsync`s it, then atomically renames it into place, so a crash mid-write can never leave a corrupted or partially-written vault
 - **Restrictive permissions**: The journal directory (`0700`) and file (`0600`) are locked to the owner on POSIX systems (best-effort no-op on Windows)
 - **Secure wipe**: Panic option overwrites the file with random data before deletion
-- **OS-level caveat**: Secure erase depends on filesystem type; SSDs may not guarantee complete erasure
+- **OS-level caveat**: Secure erase depends on filesystem type; **SSDs may not guarantee complete erasure**
 
 ## Installation
 
@@ -140,11 +139,11 @@ Entries
 
 #### View an Entry
 
-```
-deepvault> view abc12345-1234-1234-1234-123456789abc
-```
+You can use a unique ID prefix shown in the list output to view an entry:
 
-You can also use a unique ID prefix shown in the list output.
+```
+deepvault> view abc12345
+```
 
 #### Search Entries
 
@@ -157,7 +156,7 @@ Found 2 matching entries:
 #### Delete an Entry
 
 ```
-deepvault> delete abc12345-1234-1234-1234-123456789abc
+deepvault> delete abc12345
 Are you sure you want to delete: My First Secret?
 Type 'yes' to confirm: yes
 ✓ Entry deleted and changes saved!
@@ -183,8 +182,8 @@ deepvault> exit
 
 ```
 encrypted-journal-cli/
-├── README.md                # This file
-├── requirements.txt         # Python dependencies
+├── README.md               # This file
+├── requirements.txt        # Python dependencies
 ├── config.py               # Configuration and constants
 ├── crypto_utils.py         # Encryption/decryption utilities
 ├── storage.py              # Journal file I/O
@@ -214,16 +213,6 @@ encrypted-journal-cli/
 - **Secure Erase Limitations**: The panic wipe is a basic overwrite. For high-security scenarios, consider DBAN or cryptographic erasure (encrypt before deletion).
 - **Backup**: Store encrypted journal backups securely; remember your passphrase is the only recovery method.
 
-## Portfolio Highlights
-
-This project demonstrates:
-
-- **Cryptographic best practices**: PBKDF2 with high iteration count, AES-256-GCM, a versioned on-disk format, and atomic, permission-locked writes
-- **Secure Python development**: Proper use of the `cryptography` library
-- **CLI design**: Intuitive command interface with error handling
-- **Modular architecture**: Clean separation of concerns (crypto, storage, UI, main)
-- **User experience**: Colored output, typing effects, and helpful prompts
-
 ## License
 
 This is an educational project. Use for learning and personal use.
@@ -238,6 +227,8 @@ DeepVault is designed for educational purposes and personal journaling on local 
 - Understanding OS-level security limitations
 
 *For critical data, please consider consulting security professionals and using already established solutions.*
+
+AI was used in the development of this application, namely Claude Sonnet 5.
 
 ## About
 
