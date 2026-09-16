@@ -6,7 +6,6 @@ Ties together crypto, storage, and UI modules.
 import os
 import sys
 import traceback
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidTag
 
 import config
@@ -74,29 +73,31 @@ def _read_entry_body() -> str:
     return "\n".join(lines).strip()
 
 
-def init_new_journal(passphrase: str) -> dict:
-    """Initialize a new journal."""
+def init_new_journal(passphrase: str) -> tuple[dict, bytes]:
+    """Initialize a new journal, deriving its key once for the session."""
     journal = storage.initialize_journal()
-    storage.save_journal(journal, passphrase)
+    journal["iterations"] = config.ITERATIONS
+    key = crypto_utils.derive_key(passphrase, bytes.fromhex(journal["salt"]), config.ITERATIONS)
+    storage.save_journal(journal, key)
     ui.print_success("New journal created and encrypted!")
-    return journal
+    return journal, key
 
 
-def load_or_create_journal(passphrase: str) -> dict | None:
-    """Load existing journal or create new one."""
+def load_or_create_journal(passphrase: str) -> tuple[dict, bytes] | tuple[None, None]:
+    """Load existing journal or create new one. Returns (journal, key)."""
     try:
-        journal = storage.load_journal(passphrase)
+        journal, key = storage.load_journal(passphrase)
         ui.print_success("Journal decrypted successfully!")
-        return journal
+        return journal, key
     except FileNotFoundError:
         ui.print_info("No existing journal found. Creating new one...")
         return init_new_journal(passphrase)
     except (InvalidTag, ValueError) as e:
         ui.print_error("Failed to decrypt journal. Wrong passphrase?")
-        return None
+        return None, None
 
 
-def cmd_new(journal: dict, passphrase: str) -> dict:
+def cmd_new(journal: dict, key: bytes) -> dict:
     """Create a new entry."""
     print()
     title = input(ui.Fore.CYAN + "Entry title: " + ui.Style.RESET_ALL).strip()
@@ -112,7 +113,7 @@ def cmd_new(journal: dict, passphrase: str) -> dict:
         return journal
     
     journal = storage.add_entry(journal, title, body)
-    storage.save_journal(journal, passphrase)
+    storage.save_journal(journal, key)
     ui.print_success("Entry added and saved!")
     return journal
 
@@ -146,7 +147,7 @@ def cmd_search(journal: dict, query: str) -> None:
         ui.print_info("No entries match your search.")
 
 
-def cmd_delete(journal: dict, entry_id: str, passphrase: str) -> dict:
+def cmd_delete(journal: dict, entry_id: str, key: bytes) -> dict:
     """Delete an entry."""
     try:
         # Confirm deletion
@@ -160,7 +161,7 @@ def cmd_delete(journal: dict, entry_id: str, passphrase: str) -> dict:
             return journal
         
         journal = storage.delete_entry(journal, entry_id)
-        storage.save_journal(journal, passphrase)
+        storage.save_journal(journal, key)
         ui.print_success("Entry deleted and changes saved!")
         return journal
     except ValueError as e:
@@ -168,7 +169,7 @@ def cmd_delete(journal: dict, entry_id: str, passphrase: str) -> dict:
         return journal
 
 
-def cmd_panic(passphrase: str) -> bool:
+def cmd_panic() -> bool:
     """Securely wipe the journal file."""
     print()
     print(ui.Fore.RED + "⚠ WARNING: This will permanently delete your encrypted journal!" + ui.Style.RESET_ALL)
@@ -211,9 +212,11 @@ def main():
             ui.print_error("Passphrase cannot be empty!")
             sys.exit(1)
         
-        # Load or create journal
+        # Load or create journal, then drop the raw passphrase from memory:
+        # only the derived key is needed for the rest of the session.
         print()
-        journal = load_or_create_journal(passphrase)
+        journal, key = load_or_create_journal(passphrase)
+        passphrase = None
         
         if journal is None:
             sys.exit(1)
@@ -234,7 +237,7 @@ def main():
                 args = parts[1] if len(parts) > 1 else ""
                 
                 if cmd == "new":
-                    journal = cmd_new(journal, passphrase)
+                    journal = cmd_new(journal, key)
                 
                 elif cmd == "list":
                     cmd_list(journal)
@@ -255,10 +258,10 @@ def main():
                     if not args:
                         ui.print_error("Usage: delete <entry_id>")
                     else:
-                        journal = cmd_delete(journal, args, passphrase)
+                        journal = cmd_delete(journal, args, key)
                 
                 elif cmd == "panic":
-                    if cmd_panic(passphrase):
+                    if cmd_panic():
                         ui.print_success("Exiting DeepVault.")
                         break
                 

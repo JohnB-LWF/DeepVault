@@ -12,22 +12,29 @@ from cryptography.hazmat.backends import default_backend
 import config
 
 
-def derive_key(passphrase: str, salt: bytes) -> bytes:
+def derive_key(passphrase: str, salt: bytes, iterations: int = None) -> bytes:
     """
     Derive a 256-bit AES key from a passphrase using PBKDF2-SHA256.
     
     Args:
         passphrase: Master passphrase (string)
         salt: Random salt bytes for key derivation
+        iterations: PBKDF2 iteration count (defaults to config.ITERATIONS).
+            Callers loading an existing file should pass the iteration count
+            stored in that file's header so older vaults keep working even
+            if config.ITERATIONS is later increased.
         
     Returns:
         32-byte key suitable for AES-256
     """
+    if iterations is None:
+        iterations = config.ITERATIONS
+
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,  # 256 bits
         salt=salt,
-        iterations=config.ITERATIONS,
+        iterations=iterations,
         backend=default_backend()
     )
     return kdf.derive(passphrase.encode())

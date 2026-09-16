@@ -22,10 +22,11 @@ A secure, command-line encrypted journal application with military-grade AES-256
 ## Features
 
 - **AES-256-GCM Encryption**: Military-grade authenticated encryption for all journal entries
-- **Strong Key Derivation**: PBKDF2-SHA256 with 480,000 iterations for passphrase-based key generation
+- **Strong Key Derivation**: PBKDF2-SHA256 with 600,000 iterations for passphrase-based key generation (OWASP 2023+ guidance)
 - **Local Storage Only**: All data stored locally—nothing leaves your machine
 - **Full Encryption**: Entire journal file is encrypted; no metadata leakage
 - **Authenticated Encryption**: GCM mode ensures data integrity; tampered files are rejected
+- **Atomic, Locked-Down Writes**: Saves are written to a temp file and renamed into place, and the journal directory/file are restricted to owner-only permissions
 - **Hacker Aesthetic**: Mr. Robot-inspired terminal UI with ASCII art banner
 - **Easy-to-Use CLI**: Intuitive command interface for managing journal entries
 - **Panic Wipe**: Secure file deletion option for emergency scenarios
@@ -36,18 +37,26 @@ A secure, command-line encrypted journal application with military-grade AES-256
 ### Encryption
 
 - **Algorithm**: AES-256 in GCM mode (authenticated encryption with associated data)
-- **Key Derivation**: PBKDF2-SHA256 with a random salt and 480,000 iterations
+- **Key Derivation**: PBKDF2-SHA256 with a random salt and 600,000 iterations (the iteration count actually used is stored in the file header, so raising it later never breaks older vaults)
 - **Salt Length**: 256 bits (32 bytes)
 - **IV Length**: 128 bits (16 bytes, unique per encryption)
 - **Security**: Uses the `cryptography` library with hardware-accelerated implementations
 
 ### Data Storage
 
-The journal is stored as a single encrypted blob containing:
+The journal file is a single binary blob—nothing is ever written to disk in plaintext. Layout (format version 2):
+
+```
+1 byte    format version
+4 bytes   PBKDF2 iteration count (big-endian)
+32 bytes  salt
+N bytes   AES-GCM IV + ciphertext + authentication tag
+```
+
+Once decrypted in memory, the journal is a plain dictionary:
 
 ```json
 {
-  "salt": "hex-encoded salt",
   "entries": [
     {
       "id": "unique-uuid",
@@ -61,9 +70,11 @@ The journal is stored as a single encrypted blob containing:
 
 ### Security Notes
 
-- **No plaintext storage**: Entries only exist in memory during operation
-- **Passphrase-only**: The passphrase is never stored; only the derived key is used
-- **Authenticated encryption**: GCM mode detects any unauthorized modifications
+- **Encrypted at rest, always**: The file on disk is always ciphertext; entries only ever exist as plaintext in memory (RAM) while the app is running
+- **Session-scoped key**: The AES key is derived from the passphrase once per session; the raw passphrase is dropped from memory immediately afterward instead of being kept around for the whole session
+- **Authenticated encryption**: GCM mode detects any unauthorized modification—tampering with even a single byte of the file causes decryption to fail
+- **Atomic saves**: Each save writes to a temp file, `fsync`s it, then atomically renames it into place, so a crash mid-write can never leave a corrupted or partially-written vault
+- **Restrictive permissions**: The journal directory (`0700`) and file (`0600`) are locked to the owner on POSIX systems (best-effort no-op on Windows)
 - **Secure wipe**: Panic option overwrites the file with random data before deletion
 - **OS-level caveat**: Secure erase depends on filesystem type; SSDs may not guarantee complete erasure
 
@@ -198,8 +209,8 @@ encrypted-journal-cli/
 
 ## Security Considerations for Deployment
 
-- **Memory Exposure**: Passphrases and plaintext entries exist in memory during operation. Use trusted environments.
-- **Filesystem Security**: Rely on OS-level file permissions; consider full-disk encryption for additional security.
+- **Memory Exposure**: Plaintext entries and the derived key exist in memory during operation. Use trusted environments. The raw passphrase itself is only held briefly, until the key is derived.
+- **Filesystem Security**: The journal directory/file are chmod'd to owner-only, but you should still rely on OS-level file permissions and consider full-disk encryption for additional security.
 - **Secure Erase Limitations**: The panic wipe is a basic overwrite. For high-security scenarios, consider DBAN or cryptographic erasure (encrypt before deletion).
 - **Backup**: Store encrypted journal backups securely; remember your passphrase is the only recovery method.
 
@@ -207,7 +218,7 @@ encrypted-journal-cli/
 
 This project demonstrates:
 
-- **Cryptographic best practices**: PBKDF2 with high iteration count, AES-256-GCM
+- **Cryptographic best practices**: PBKDF2 with high iteration count, AES-256-GCM, a versioned on-disk format, and atomic, permission-locked writes
 - **Secure Python development**: Proper use of the `cryptography` library
 - **CLI design**: Intuitive command interface with error handling
 - **Modular architecture**: Clean separation of concerns (crypto, storage, UI, main)
